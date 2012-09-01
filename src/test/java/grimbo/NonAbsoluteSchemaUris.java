@@ -56,15 +56,8 @@ public final class NonAbsoluteSchemaUris {
     public void testEmptyObject() throws Exception {
         ValidationReport r = doValidate("/grimbo/child1/child.json", "/grimbo/empty-object.json");
         printReport(r);
-        JsonNode errors = r.asJsonNode().get("");
-        assertEquals(errors.size(), 2);
-        Set<String> expected = new HashSet<String>(Arrays.asList("header", "body"));
-        for (int i = errors.size() - 1; i >= 0; i--) {
-            JsonNode error = errors.get(i);
-            String missing = error.get("missing").get(0).asText();
-            assertTrue(expected.remove(missing));
-        }
-        assertTrue(expected.isEmpty());
+        Set<String> expectedMissing = new HashSet<String>(Arrays.asList("header", "body"));
+        assertPropertiesMissing(r, "", expectedMissing);
     }
 
     @Test
@@ -78,7 +71,29 @@ public final class NonAbsoluteSchemaUris {
     public void testTestObjectNoBodyItem() throws Exception {
         ValidationReport r = doValidate("/grimbo/child1/child.json", "/grimbo/test-object-no-bodyItem.json");
         printReport(r);
+        Set<String> expectedMissing = new HashSet<String>(Arrays.asList("bodyItem"));
+        assertPropertiesMissing(r, "/body", expectedMissing);
+    }
+
+    @Test
+    public void testAbsoluteUriForParent() throws Exception {
+        // Test that a schema can refer to an absolute schema.
+        // And that any relative refs from the absolute schema, are interpreted
+        // relative to that schema.
+        ValidationReport r = doValidate("/grimbo/fake/absolute/location/child.json", "/grimbo/test-object.json");
+        printReport(r);
         assertTrue(r.isSuccess());
+    }
+
+    private void assertPropertiesMissing(ValidationReport report, String path, Set<String> missing) {
+        JsonNode errors = report.asJsonNode().get(path);
+        assertEquals(errors.size(), missing.size(), "Number of errors same");
+        for (int i = errors.size() - 1; i >= 0; i--) {
+            JsonNode error = errors.get(i);
+            String prop = error.get("missing").get(0).asText();
+            assertTrue(missing.remove(prop));
+        }
+        assertTrue(missing.isEmpty());
     }
 
     private ValidationReport doValidate(String schemaResource, String dataResource) throws Exception {

@@ -1,0 +1,14 @@
+{
+	"type": "object",
+	"extends": {
+		"$ref": "file:/C:/Users/grimbo/git/json-schema-validator/target/test-classes/grimbo/common/parent.json"
+	},
+	"$schema": "http://json-schema.org/draft-03/schema",
+	"id": "child",
+	"properties": {
+		"body": {
+			"$ref": "common/child-body.json",
+			"required": true
+		}
+	}
+}
