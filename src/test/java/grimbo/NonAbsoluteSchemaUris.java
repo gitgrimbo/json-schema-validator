@@ -19,13 +19,20 @@ package grimbo;
 
 import static org.testng.Assert.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.eel.kitchen.jsonschema.main.JsonSchema;
 import org.eel.kitchen.jsonschema.main.JsonSchemaFactory;
@@ -61,8 +68,26 @@ public final class NonAbsoluteSchemaUris {
     }
 
     @Test
-    public void testTestObject() throws Exception {
+    public void testSchemaWithRelativeRefsLoadedFromFile() throws Exception {
         ValidationReport r = doValidate("/grimbo/child1/child.json", "/grimbo/test-object.json");
+        printReport(r);
+        assertTrue(r.isSuccess());
+    }
+
+    @Test
+    public void testSchemaWithRelativeRefsLoadedFromJar() throws Exception {
+        // create the jar full of schemas in target
+        File target = new File(".", "target");
+        File jarFile = new File(target, "resources.jar").getAbsoluteFile().getCanonicalFile();
+        createZip(jarFile, new File("src/test/resources"));
+
+        // create a classloader for the jar
+        URLClassLoader u = new URLClassLoader(new URL[] { jarFile.toURI().toURL() }, null);
+
+        // get the schema url from the jar
+        URL schemaURL = u.getResource("grimbo/child1/child.json");
+
+        ValidationReport r = doValidate(schemaURL, getClass().getResource("/grimbo/test-object.json"));
         printReport(r);
         assertTrue(r.isSuccess());
     }
@@ -114,5 +139,92 @@ public final class NonAbsoluteSchemaUris {
         System.out.println("\n----------\n");
         new ObjectMapper().writer(new DefaultPrettyPrinter()).writeValue(System.out, r.asJsonNode());
         System.out.println("\n----------\n");
+    }
+
+    /**
+     * Adds all the contents of "folder" to "zipName", relative to "folder".
+     * 
+     * @param zipName
+     * @param folder
+     * 
+     * @throws IOException
+     */
+    private void createZip(String zipName, String folder) throws IOException {
+        createZip(new File(zipName), new File(folder));
+    }
+
+    /**
+     * Adds all the contents of "folder" to "zipFile", relative to "folder".
+     * 
+     * @param zipFile
+     * @param folder
+     * 
+     * @throws IOException
+     */
+    private void createZip(File zipFile, File folder) throws IOException {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(zipFile);
+            ZipOutputStream out = new ZipOutputStream(fos);
+
+            addFolderToZip(folder, out);
+
+            out.close();
+        } finally {
+            close(fos);
+        }
+    }
+
+    private static void addFolderToZip(File folder, ZipOutputStream zip) throws IOException {
+        addFolderToZip(folder, zip, folder);
+    }
+
+    /**
+     * Adds all the contents of "folder" to "zip", relative to "baseFolder".
+     * 
+     * @param folder
+     * @param zip
+     * @param baseFolder
+     * 
+     * @throws IOException
+     */
+    private static void addFolderToZip(File folder, ZipOutputStream zip, File baseFolder) throws IOException {
+        File[] files = folder.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                addFolderToZip(file, zip, baseFolder);
+            } else {
+                String baseName = baseFolder.getAbsolutePath();
+                String name = file.getAbsolutePath().substring(baseName.length());
+                if (name.startsWith(File.separator)) {
+                    name = name.substring(File.separator.length());
+                }
+                name = name.replace(File.separator, "/");
+                ZipEntry zipEntry = new ZipEntry(name);
+                zip.putNextEntry(zipEntry);
+                copy(new FileInputStream(file), zip);
+                zip.closeEntry();
+            }
+        }
+    }
+
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buf = new byte[1024 * 8];
+        int read = -1;
+        while ((read = in.read(buf)) > -1) {
+            out.write(buf, 0, read);
+        }
+    }
+
+    private void close(OutputStream out) {
+        if (null == out) {
+            return;
+        }
+        try {
+            out.close();
+        } catch (IOException e) {
+            // Basically ignore
+            e.printStackTrace();
+        }
     }
 }
