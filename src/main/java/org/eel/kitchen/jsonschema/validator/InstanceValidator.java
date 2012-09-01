@@ -20,9 +20,9 @@ package org.eel.kitchen.jsonschema.validator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableSet;
 import org.eel.kitchen.jsonschema.keyword.KeywordValidator;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.ref.SchemaContainer;
+import org.eel.kitchen.jsonschema.ref.SchemaNode;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 
 import java.util.Set;
 
@@ -39,23 +39,20 @@ import java.util.Set;
 final class InstanceValidator
     implements JsonValidator
 {
-    private final JsonValidatorCache cache;
     private final SchemaNode schemaNode;
     private final Set<KeywordValidator> validators;
 
     /**
      * Constructor, package private
      *
-     * @param cache the JSON validator cache
      * @param schemaNode the schema node
      * @param validators the set of keyword validators
      */
-    InstanceValidator(final JsonValidatorCache cache,
-        final SchemaNode schemaNode, final Set<KeywordValidator> validators)
+    InstanceValidator(final SchemaNode schemaNode,
+        final Set<KeywordValidator> validators)
     {
         this.validators = ImmutableSet.copyOf(validators);
         this.schemaNode = schemaNode;
-        this.cache = cache;
     }
 
     @Override
@@ -63,22 +60,19 @@ final class InstanceValidator
         final ValidationReport report, final JsonNode instance)
     {
         final SchemaContainer orig = context.getContainer();
+        context.setContainer(schemaNode.getContainer());
 
-        for (final KeywordValidator validator: validators) {
-            context.setContainer(schemaNode.getContainer());
+        for (final KeywordValidator validator: validators)
             validator.validateInstance(context, report, instance);
+
+        if (instance.isContainerNode()) {
+            final JsonValidator validator = instance.isArray()
+                ? new ArrayValidator(schemaNode.getNode())
+                : new ObjectValidator(schemaNode.getNode());
+
+            validator.validate(context, report, instance);
         }
-
         context.setContainer(orig);
-
-        if (!instance.isContainerNode())
-            return false;
-
-        final JsonValidator validator = instance.isArray()
-            ? new ArrayValidator(cache, schemaNode)
-            : new ObjectValidator(cache, schemaNode);
-
-        validator.validate(context, report, instance);
         return false;
     }
 }

@@ -18,11 +18,13 @@
 package org.eel.kitchen.jsonschema.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 /**
  * Validator for the {@code uri} format specification
@@ -44,12 +46,16 @@ public final class URIFormatSpecifier
     }
 
     @Override
-    void checkValue(final List<String> messages, final JsonNode value)
+    public void checkValue(final String fmt, final ValidationContext ctx,
+        final ValidationReport report, final JsonNode value)
     {
         try {
             new URI(value.textValue());
         } catch (URISyntaxException ignored) {
-            messages.add("string is not a valid URI");
+            final ValidationMessage.Builder msg = newMsg(fmt)
+                .setMessage("string is not a valid URI")
+                .addInfo("value", value);
+            report.addMessage(msg.build());
         }
     }
 }

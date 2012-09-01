@@ -29,8 +29,8 @@ import java.util.Set;
 
 import org.eel.kitchen.jsonschema.main.JsonSchema;
 import org.eel.kitchen.jsonschema.main.JsonSchemaFactory;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.ref.SchemaContainer;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.uri.URIDownloader;
 import org.eel.kitchen.jsonschema.util.JsonLoader;
 import org.testng.annotations.BeforeTest;

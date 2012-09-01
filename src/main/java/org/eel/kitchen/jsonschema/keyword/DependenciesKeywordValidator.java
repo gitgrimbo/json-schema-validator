@@ -23,15 +23,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.JacksonUtils;
 import org.eel.kitchen.jsonschema.util.NodeType;
 import org.eel.kitchen.jsonschema.validator.JsonValidator;
-import org.eel.kitchen.jsonschema.validator.JsonValidatorCache;
-import org.eel.kitchen.jsonschema.validator.SchemaNode;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -135,22 +132,11 @@ public final class DependenciesKeywordValidator
         if (schemaDeps.isEmpty())
             return;
 
-        /*
-         * In this case, we need to generate other schemas, so we have to grab
-         * the validator cache and current context (schema container) in order
-         * to generate new schemas.
-         */
-        final SchemaContainer orig = context.getContainer();
-        final JsonValidatorCache cache = context.getValidatorCache();
-
         JsonValidator validator;
-        SchemaNode schemaNode;
 
         for (final JsonNode subSchema: schemaDeps.values()) {
-            schemaNode = new SchemaNode(orig, subSchema);
-            validator = cache.getValidator(schemaNode);
+            validator = context.newValidator(subSchema);
             validator.validate(context, report, instance);
-            context.setContainer(orig);
         }
     }
 

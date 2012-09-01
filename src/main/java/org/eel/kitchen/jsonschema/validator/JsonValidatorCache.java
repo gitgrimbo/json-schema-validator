@@ -27,10 +27,10 @@ import org.eel.kitchen.jsonschema.bundle.KeywordBundle;
 import org.eel.kitchen.jsonschema.keyword.KeywordFactory;
 import org.eel.kitchen.jsonschema.keyword.KeywordValidator;
 import org.eel.kitchen.jsonschema.main.JsonSchemaException;
-import org.eel.kitchen.jsonschema.main.SchemaRegistry;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.ref.SchemaNode;
+import org.eel.kitchen.jsonschema.ref.SchemaRegistry;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.syntax.SyntaxValidator;
 
 import java.util.List;
@@ -100,21 +100,18 @@ public final class JsonValidatorCache
      */
     private CacheLoader<SchemaNode, JsonValidator> cacheLoader()
     {
-        final JsonValidatorCache myself = this;
-
         return new CacheLoader<SchemaNode, JsonValidator>()
         {
             @Override
             public JsonValidator load(final SchemaNode key)
             {
-                SchemaNode realNode = key;
+                final SchemaNode realNode;
 
-                if (realNode.getNode().has("$ref"))
-                    try {
-                        realNode = resolver.resolve(key);
-                    } catch (JsonSchemaException e) {
-                        return new FailingValidator(e.getValidationMessage());
-                    }
+                try {
+                    realNode = resolver.resolve(key);
+                } catch (JsonSchemaException e) {
+                    return new FailingValidator(e.getValidationMessage());
+                }
 
                 final List<ValidationMessage> messages = Lists.newArrayList();
 
@@ -126,7 +123,7 @@ public final class JsonValidatorCache
                 final Set<KeywordValidator> validators
                     = keywordFactory.getValidators(realNode.getNode());
 
-                return new InstanceValidator(myself, realNode, validators);
+                return new InstanceValidator(realNode, validators);
             }
         };
     }

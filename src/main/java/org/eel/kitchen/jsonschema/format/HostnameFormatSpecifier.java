@@ -19,19 +19,25 @@ package org.eel.kitchen.jsonschema.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.net.InternetDomainName;
+import org.eel.kitchen.jsonschema.main.ValidationFeature;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
-
-import java.util.List;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 /**
  * Validator for the {@code host-name} format specification
  *
- * <p>Note: even though non FQDN hostnames are valid stricto sensu,
- * this implementation considers non fully-qualified hostnames as invalid.
- * While this contradicts the RFC, this is more in line with user expectations.
- * </p>
+ * <p>Note: even though the RFCs covering hostnames do not require that
+ * hostnames have a domain part, this implementation requires that they have
+ * one by default (this is more in line with user expectations). You can enforce
+ * strict RFC compliance by setting the {@link
+ * ValidationFeature#STRICT_RFC_CONFORMANCE} validation feature before building
+ * your schema factory.</p>
  *
  * <p>Guava's {@link InternetDomainName} is used for validation.</p>
+ *
+ * @see ValidationFeature
  */
 public final class HostnameFormatSpecifier
     extends FormatSpecifier
@@ -50,13 +56,25 @@ public final class HostnameFormatSpecifier
     }
 
     @Override
-    void checkValue(final List<String> messages, final JsonNode value)
+    public void checkValue(final String fmt, final ValidationContext ctx,
+        final ValidationReport report, final JsonNode value)
     {
+        final ValidationMessage.Builder msg = newMsg(fmt)
+            .setMessage("string is not a valid hostname")
+            .addInfo("value", value);
+
+        final InternetDomainName hostname;
         try {
-            if (!InternetDomainName.from(value.textValue()).hasParent())
-                messages.add("string is not a valid hostname");
+            hostname = InternetDomainName.from(value.textValue());
         } catch (IllegalArgumentException ignored) {
-            messages.add("string is not a valid hostname");
+            report.addMessage(msg.build());
+            return;
         }
+
+        if (ctx.hasFeature(ValidationFeature.STRICT_RFC_CONFORMANCE))
+            return;
+
+        if (!hostname.hasParent())
+            report.addMessage(msg.build());
     }
 }

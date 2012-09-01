@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.eel.kitchen.jsonschema.main;
+package org.eel.kitchen.jsonschema.report;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
+import org.eel.kitchen.jsonschema.main.JsonSchema;
+import org.eel.kitchen.jsonschema.main.JsonSchemaException;
 import org.eel.kitchen.jsonschema.ref.JsonPointer;
 
 import java.util.Collection;
@@ -217,5 +219,11 @@ public final class ValidationReport
         }
 
         return ret;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "current path: \"" + path + "\"; " + msgMap.size() + " messages";
     }
 }

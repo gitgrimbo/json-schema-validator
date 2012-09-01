@@ -15,16 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.eel.kitchen.jsonschema.format;
+package org.eel.kitchen.jsonschema.main;
 
-import java.io.IOException;
+import org.eel.kitchen.jsonschema.format.EmailFormatSpecifier;
+import org.eel.kitchen.jsonschema.format.HostnameFormatSpecifier;
 
-public final class PhoneNumberFormatSpecifierTest
-    extends AbstractFormatSpecifierTest
+/**
+ * Validation features
+ */
+public enum ValidationFeature
 {
-    PhoneNumberFormatSpecifierTest()
-        throws IOException
-    {
-        super(PhoneNumberFormatSpecifier.getInstance(), "phone");
-    }
+    /**
+     * Make the {@code email} and {@code host-name} format specifiers obey the
+     * RFCs to the letter
+     *
+     * @see EmailFormatSpecifier
+     * @see HostnameFormatSpecifier
+     */
+    STRICT_RFC_CONFORMANCE
 }

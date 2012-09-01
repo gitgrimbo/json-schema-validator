@@ -18,10 +18,13 @@
 package org.eel.kitchen.jsonschema.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.eel.kitchen.jsonschema.report.ValidationDomain;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 import java.util.EnumSet;
-import java.util.List;
 
 /**
  * Base class for a format specifier
@@ -29,7 +32,7 @@ import java.util.List;
  * <p>The {@code format} keyword always takes a string as an argument, and this
  * string is called a "specifier". The draft defines specifiers for recognizing
  * URIs, phone numbers, different date formats, and so on -- and even CSS 2.1
- * colors and styles(not supported).</p>
+ * colors and styles (not supported).</p>
  *
  * <p>One important thing to remember is that a specifier will only validate a
  * given subset of JSON instance types (for instance, {@code uri} only validates
@@ -67,29 +70,45 @@ public abstract class FormatSpecifier
      * Main validation function
      *
      * <p>This function only checks whether the value is of a type recognized
-     * by this specifier. If so, it call {@link #checkValue(List, JsonNode)}.
-     * </p>
+     * by this specifier. If so, it calls {@link #checkValue(String,
+     * ValidationContext, ValidationReport, JsonNode)}.</p>
      *
-     * @param messages the list of messages to fill
+     * <p>The message template passed as an argument will have been pre-filled
+     * with the keyword ({@code format}, the specifier name and the domain
+     * ({@link ValidationDomain#VALIDATION}).</p>
+     *
+     * @param fmt the format specifier name
+     * @param ctx the validation context
+     * @param report the validation report
      * @param value the value to validate
      */
-    public final void validate(final List<String> messages,
-        final JsonNode value)
+    public final void validate(final String fmt, final ValidationContext ctx,
+        final ValidationReport report, final JsonNode value)
     {
         if (!typeSet.contains(NodeType.getNodeType(value)))
             return;
 
-        checkValue(messages, value);
+        checkValue(fmt, ctx, report, value);
     }
 
     /**
      * Abstract method implemented by all specifiers
      *
      * <p>It is only called if the value type is one expected by the
-     * specifier, see {@link #validate(List, JsonNode)}.</p>
+     * specifier, see  {@link #validate(String, ValidationContext,
+     * ValidationReport, JsonNode)}.</p>
      *
-     * @param messages the list of messages to fill
+     * @param fmt the format specifier name
+     * @param ctx the validation context
+     * @param report the validation report
      * @param value the value to validate
      */
-    abstract void checkValue(final List<String> messages, final JsonNode value);
+    public abstract void checkValue(final String fmt, ValidationContext ctx,
+        final ValidationReport report, final JsonNode value);
+
+    protected static ValidationMessage.Builder newMsg(final String fmt)
+    {
+        return new ValidationMessage.Builder(ValidationDomain.VALIDATION)
+            .setKeyword("format").addInfo("format", fmt);
+    }
 }

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.eel.kitchen.jsonschema.main;
+package org.eel.kitchen.jsonschema.report;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.eel.kitchen.jsonschema.keyword.KeywordValidator;
-import org.eel.kitchen.jsonschema.syntax.SimpleSyntaxChecker;
 import org.eel.kitchen.jsonschema.syntax.SyntaxChecker;
 import org.eel.kitchen.jsonschema.util.JacksonUtils;
 
@@ -93,7 +92,7 @@ public final class ValidationMessage
 
     public JsonNode getInfo(final String key)
     {
-        return info.get(key);
+        return info.get(key).deepCopy();
     }
 
     public JsonNode toJsonNode()
@@ -172,9 +171,6 @@ public final class ValidationMessage
      *     instance also filled with the correct domain and keyword.</li>
      * </ul>
      *
-     * @see KeywordValidator#newMsg()
-     * @see SyntaxChecker#checkSyntax(Builder, List, JsonNode)
-     * @see SimpleSyntaxChecker#checkValue(Builder, List, JsonNode)
      */
     public static final class Builder
     {

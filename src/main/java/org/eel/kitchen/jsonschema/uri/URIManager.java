@@ -24,10 +24,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.eel.kitchen.jsonschema.keyword.NumericKeywordValidator;
 import org.eel.kitchen.jsonschema.main.JsonSchemaException;
-import org.eel.kitchen.jsonschema.main.SchemaRegistry;
-import org.eel.kitchen.jsonschema.main.ValidationDomain;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
 import org.eel.kitchen.jsonschema.ref.JsonRef;
+import org.eel.kitchen.jsonschema.ref.SchemaRegistry;
+import org.eel.kitchen.jsonschema.report.ValidationDomain;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
 import org.eel.kitchen.jsonschema.util.JsonLoader;
 
 import java.io.IOException;
@@ -55,8 +55,8 @@ public class URIManager
      * Our object mapper
      *
      * <p>Note that it uses {@link
-     * DeserializationFeature#USE_BIG_DECIMAL_FOR_FLOATS} to deserialize,
-     * for accuracy reasons.</p>
+     * DeserializationFeature#USE_BIG_DECIMAL_FOR_FLOATS} to deserialize, for
+     * accuracy reasons.</p>
      *
      * @see NumericKeywordValidator
      */
@@ -87,6 +87,7 @@ public class URIManager
         downloaders.put("ftp", DefaultURIDownloader.getInstance());
         downloaders.put("file", DefaultURIDownloader.getInstance());
         downloaders.put("jar", DefaultURIDownloader.getInstance());
+        downloaders.put("resource", ResourceURIDownloader.getInstance());
     }
 
     /**

@@ -24,8 +24,8 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import org.eel.kitchen.jsonschema.main.JsonSchemaException;
-import org.eel.kitchen.jsonschema.main.ValidationDomain;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationDomain;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
 
 import java.util.List;
 
@@ -61,7 +61,6 @@ import java.util.List;
 
 public final class JsonPointer
     extends JsonFragment
-    implements Comparable<JsonPointer>
 {
     private static final CharMatcher SLASH = CharMatcher.is('/');
     private static final CharMatcher ESCAPE_CHAR = CharMatcher.is('~');
@@ -318,12 +317,6 @@ public final class JsonPointer
                 sb.append(c);
 
         return sb.toString();
-    }
-
-    @Override
-    public int compareTo(final JsonPointer other)
-    {
-        return asString.compareTo(other.asString);
     }
 
     private static ValidationMessage.Builder newMsg(final String reason)

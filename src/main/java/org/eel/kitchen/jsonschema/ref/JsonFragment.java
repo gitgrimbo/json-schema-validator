@@ -33,6 +33,7 @@ import org.eel.kitchen.jsonschema.main.JsonSchemaException;
  * @see JsonPointer
  */
 public abstract class JsonFragment
+    implements Comparable<JsonFragment>
 {
     protected final String asString;
 
@@ -97,6 +98,13 @@ public abstract class JsonFragment
     }
 
     @Override
+    public int compareTo(final JsonFragment other)
+    {
+        return asString.compareTo(other.asString);
+    }
+
+
+    @Override
     public final int hashCode()
     {
         return asString.hashCode();
@@ -110,7 +118,9 @@ public abstract class JsonFragment
         if (!(obj instanceof JsonFragment))
             return false;
 
-        return asString.equals(((JsonFragment) obj).asString);
+        final JsonFragment other = (JsonFragment) obj;
+
+        return asString.equals(other.asString);
     }
 
     @Override

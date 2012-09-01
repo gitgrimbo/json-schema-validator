@@ -18,14 +18,11 @@
 package org.eel.kitchen.jsonschema.keyword;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
 import org.eel.kitchen.jsonschema.validator.JsonValidator;
-import org.eel.kitchen.jsonschema.validator.JsonValidatorCache;
-import org.eel.kitchen.jsonschema.validator.SchemaNode;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 /**
  * Validator for the {@code type} keyword
@@ -81,20 +78,15 @@ public final class TypeKeywordValidator
     private void trySchemas(final ValidationContext context,
         final ValidationReport schemaReport, final JsonNode instance)
     {
-        final SchemaContainer orig = context.getContainer();
-        final JsonValidatorCache cache = context.getValidatorCache();
         final ValidationReport report = schemaReport.copy();
 
         ValidationReport subReport;
         JsonValidator validator;
-        SchemaNode schemaNode;
 
         for (final JsonNode schema: schemas) {
             subReport = report.copy();
-            schemaNode = new SchemaNode(orig, schema);
-            validator = cache.getValidator(schemaNode);
+            validator = context.newValidator(schema);
             validator.validate(context, subReport, instance);
-            context.setContainer(orig);
             if (subReport.isSuccess())
                 return;
             report.mergeWith(subReport);

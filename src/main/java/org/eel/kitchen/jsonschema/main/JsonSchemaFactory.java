@@ -22,13 +22,19 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.eel.kitchen.jsonschema.bundle.Keyword;
 import org.eel.kitchen.jsonschema.bundle.KeywordBundle;
 import org.eel.kitchen.jsonschema.bundle.KeywordBundles;
+import org.eel.kitchen.jsonschema.format.FormatBundle;
+import org.eel.kitchen.jsonschema.format.FormatSpecifier;
 import org.eel.kitchen.jsonschema.ref.JsonPointer;
 import org.eel.kitchen.jsonschema.ref.JsonRef;
+import org.eel.kitchen.jsonschema.ref.SchemaContainer;
+import org.eel.kitchen.jsonschema.ref.SchemaNode;
+import org.eel.kitchen.jsonschema.ref.SchemaRegistry;
 import org.eel.kitchen.jsonschema.uri.URIDownloader;
 import org.eel.kitchen.jsonschema.uri.URIManager;
 import org.eel.kitchen.jsonschema.validator.JsonValidatorCache;
 
 import java.net.URI;
+import java.util.EnumSet;
 
 /**
  * Factory to build JSON Schema validating instances
@@ -55,6 +61,8 @@ public final class JsonSchemaFactory
 
     private final JsonValidatorCache cache;
 
+    private final EnumSet<ValidationFeature> features;
+
     /**
      * Constructor, private by design
      *
@@ -64,7 +72,8 @@ public final class JsonSchemaFactory
     private JsonSchemaFactory(final Builder builder)
     {
         registry = new SchemaRegistry(builder.uriManager, builder.namespace);
-        cache = new JsonValidatorCache(builder.bundle, registry);
+        cache = new JsonValidatorCache(builder.keywordBundle, registry);
+        features = EnumSet.copyOf(builder.features);
     }
 
     /**
@@ -145,9 +154,7 @@ public final class JsonSchemaFactory
     }
 
     /**
-     * Specialized constructor for validation internals
-     *
-     * <p>You should not use it in theory. I can dream ;)</p>
+     * Create a {@link JsonSchema} instance
      *
      * @param container the schema container
      * @param schema the subschema
@@ -156,13 +163,10 @@ public final class JsonSchemaFactory
     private JsonSchema createSchema(final SchemaContainer container,
         final JsonNode schema)
     {
-        return new JsonSchema(cache, container, schema);
+        final SchemaNode schemaNode = new SchemaNode(container, schema);
+        return new JsonSchema(cache, features, schemaNode);
     }
 
-    public JsonValidatorCache getValidatorCache()
-    {
-        return cache;
-    }
     /**
      * Builder class for a {@link JsonSchemaFactory}
      */
@@ -171,39 +175,22 @@ public final class JsonSchemaFactory
         /**
          * The keyword bundle
          */
-        private final KeywordBundle bundle;
+        private KeywordBundle keywordBundle = KeywordBundles.defaultBundle();
 
         /**
          * The URI manager
          */
-        private final URIManager uriManager;
+        private final URIManager uriManager = new URIManager();
 
         /**
          * The namespace
          */
         private URI namespace = URI.create("");
 
-        /**
-         * No arg constructor
-         *
-         * <p>This calls the main constructor with
-         * {@link KeywordBundles#defaultBundle()} as an argument.</p>
-         */
-        public Builder()
-        {
-            this(KeywordBundles.defaultBundle());
-        }
+        private final EnumSet<ValidationFeature> features
+            = EnumSet.noneOf(ValidationFeature.class);
 
-        /**
-         * Main constructor
-         *
-         * @param bundle the keyword bundle to use
-         */
-        public Builder(final KeywordBundle bundle)
-        {
-            this.bundle = bundle;
-            uriManager = new URIManager();
-        }
+        private FormatBundle formatBundle = FormatBundle.defaultBundle();
 
         /**
          * Register a {@link URIDownloader} for a given scheme
@@ -243,7 +230,7 @@ public final class JsonSchemaFactory
          */
         public Builder registerKeyword(final Keyword keyword)
         {
-            bundle.registerKeyword(keyword);
+            keywordBundle.registerKeyword(keyword);
             return this;
         }
 
@@ -255,7 +242,19 @@ public final class JsonSchemaFactory
          */
         public Builder unregisterKeyword(final String name)
         {
-            bundle.unregisterKeyword(name);
+            keywordBundle.unregisterKeyword(name);
+            return this;
+        }
+
+        public Builder withKeywordBundle(final KeywordBundle keywordBundle)
+        {
+            this.keywordBundle = keywordBundle;
+            return this;
+        }
+
+        public Builder addKeywords(final KeywordBundle keywordBundle)
+        {
+            this.keywordBundle.mergeWith(keywordBundle);
             return this;
         }
 
@@ -296,6 +295,37 @@ public final class JsonSchemaFactory
         public Builder addRedirection(final String from, final String to)
         {
             uriManager.addRedirection(from, to);
+            return this;
+        }
+
+        public Builder enableFeature(final ValidationFeature feature)
+        {
+            features.add(feature);
+            return this;
+        }
+
+        public Builder registerFormat(final String fmt,
+            final FormatSpecifier specifier)
+        {
+            formatBundle.registerFormat(fmt, specifier);
+            return this;
+        }
+
+        public Builder unregisterFormat(final String fmt)
+        {
+            formatBundle.unregisterFormat(fmt);
+            return this;
+        }
+
+        public Builder withFormatBundle(final FormatBundle formatBundle)
+        {
+            this.formatBundle = formatBundle;
+            return this;
+        }
+
+        public Builder addFormats(final FormatBundle formatBundle)
+        {
+            this.formatBundle.mergeWith(formatBundle);
             return this;
         }
 

@@ -19,10 +19,9 @@ package org.eel.kitchen.jsonschema.validator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
 import org.eel.kitchen.jsonschema.ref.JsonPointer;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
+import org.eel.kitchen.jsonschema.util.JacksonUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,16 +44,14 @@ import java.util.List;
  *
  */
 final class ArrayValidator
-    extends ContainerValidator
+    implements JsonValidator
 {
     private final JsonNode additionalItems;
 
     private final List<JsonNode> items;
 
-    ArrayValidator(final JsonValidatorCache cache, final SchemaNode schemaNode)
+    ArrayValidator(final JsonNode schema)
     {
-        super(cache, schemaNode);
-
         JsonNode node;
 
         node = schema.path("items");
@@ -70,27 +67,24 @@ final class ArrayValidator
 
         node = schema.path("additionalItems");
 
-        additionalItems = node.isObject() ? node : EMPTY_SCHEMA;
+        additionalItems = node.isObject() ? node : JacksonUtils.emptySchema();
     }
 
     @Override
     public boolean validate(final ValidationContext context,
         final ValidationReport report, final JsonNode instance)
     {
-        final SchemaContainer orig = context.getContainer();
         final JsonPointer pwd = report.getPath();
 
-        JsonNode element;
+        JsonNode subSchema, element;
         JsonValidator validator;
-        SchemaNode subNode;
 
         for (int i = 0; i < instance.size(); i++) {
-            subNode = new SchemaNode(orig, getSchema(i));
-            element = instance.get(i);
             report.setPath(pwd.append(i));
-            validator = cache.getValidator(subNode);
+            element = instance.get(i);
+            subSchema = getSchema(i);
+            validator = context.newValidator(subSchema);
             validator.validate(context, report, element);
-            context.setContainer(orig);
         }
 
         report.setPath(pwd);

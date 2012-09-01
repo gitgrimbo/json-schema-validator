@@ -18,15 +18,15 @@
 package org.eel.kitchen.jsonschema.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.JsonLoader;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -34,6 +34,7 @@ import static org.testng.Assert.*;
 public abstract class AbstractFormatSpecifierTest
 {
     private final FormatSpecifier specifier;
+    private final String fmt;
 
     private final JsonNode testData;
 
@@ -42,6 +43,7 @@ public abstract class AbstractFormatSpecifierTest
         throws IOException
     {
         this.specifier = specifier;
+        fmt = resourceName;
 
         testData = JsonLoader.fromResource("/format/" + resourceName + ".json");
     }
@@ -61,14 +63,14 @@ public abstract class AbstractFormatSpecifierTest
         return set.iterator();
     }
 
-    @Test(
-        dataProvider = "getData"
-    )
+    @Test(dataProvider = "getData", invocationCount = 10, threadPoolSize = 4)
     public void testSpecifier(final JsonNode data, final boolean valid)
     {
-        final List<String> messages = new ArrayList<String>();
-        specifier.checkValue(messages, data);
+        final ValidationContext ctx = new ValidationContext(null);
+        final ValidationReport report = new ValidationReport();
 
-        assertEquals(messages.isEmpty(), valid);
+        specifier.checkValue(fmt, ctx, report, data);
+
+        assertEquals(report.isSuccess(), valid);
     }
 }

@@ -19,9 +19,10 @@ package org.eel.kitchen.jsonschema.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.net.InetAddresses;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
-
-import java.util.List;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 /**
  * Validator for the {@code ip-address} format specification, ie an IPv4 address
@@ -46,16 +47,18 @@ public final class IPV4FormatSpecifier
     }
 
     @Override
-    void checkValue(final List<String> messages, final JsonNode value)
+    public void checkValue(final String fmt, final ValidationContext ctx,
+        final ValidationReport report, final JsonNode value)
     {
         final String ipaddr = value.textValue();
 
-        if (!InetAddresses.isInetAddress(ipaddr)) {
-            messages.add("string is not a valid IPv4 address");
+        if (InetAddresses.isInetAddress(ipaddr) && InetAddresses
+            .forString(ipaddr).getAddress().length == IPV4_LENGTH)
             return;
-        }
 
-        if (InetAddresses.forString(ipaddr).getAddress().length != IPV4_LENGTH)
-            messages.add("string is not a valid IPv4 address");
+        final ValidationMessage.Builder msg = newMsg(fmt)
+            .setMessage("string is not a valid IPv4 address")
+            .addInfo("value", value);
+        report.addMessage(msg.build());
     }
 }

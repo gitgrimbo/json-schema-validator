@@ -18,9 +18,13 @@
 package org.eel.kitchen.jsonschema.main;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.eel.kitchen.jsonschema.ref.SchemaNode;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.validator.JsonValidator;
 import org.eel.kitchen.jsonschema.validator.JsonValidatorCache;
-import org.eel.kitchen.jsonschema.validator.SchemaNode;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
+
+import java.util.EnumSet;
 
 /**
  * The main validation class
@@ -34,15 +38,15 @@ import org.eel.kitchen.jsonschema.validator.SchemaNode;
 public final class JsonSchema
 {
     private final JsonValidatorCache cache;
-    private final SchemaContainer container;
+    private final EnumSet<ValidationFeature> features;
     private final SchemaNode schemaNode;
 
-    JsonSchema(final JsonValidatorCache cache, final SchemaContainer container,
-        final JsonNode schema)
+    JsonSchema(final JsonValidatorCache cache,
+        final EnumSet<ValidationFeature> features, final SchemaNode schemaNode)
     {
         this.cache = cache;
-        this.container = container;
-        schemaNode = new SchemaNode(container, schema);
+        this.features = EnumSet.copyOf(features);
+        this.schemaNode = schemaNode;
     }
 
     /**
@@ -53,8 +57,8 @@ public final class JsonSchema
      */
     public ValidationReport validate(final JsonNode instance)
     {
-        final ValidationContext context = new ValidationContext(cache);
-        context.setContainer(container);
+        final ValidationContext context
+            = new ValidationContext(cache, features);
 
         final ValidationReport report = new ValidationReport();
 

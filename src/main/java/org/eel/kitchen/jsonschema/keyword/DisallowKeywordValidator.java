@@ -18,14 +18,11 @@
 package org.eel.kitchen.jsonschema.keyword;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.eel.kitchen.jsonschema.main.SchemaContainer;
-import org.eel.kitchen.jsonschema.main.ValidationContext;
-import org.eel.kitchen.jsonschema.main.ValidationMessage;
-import org.eel.kitchen.jsonschema.main.ValidationReport;
+import org.eel.kitchen.jsonschema.report.ValidationMessage;
+import org.eel.kitchen.jsonschema.report.ValidationReport;
 import org.eel.kitchen.jsonschema.util.NodeType;
 import org.eel.kitchen.jsonschema.validator.JsonValidator;
-import org.eel.kitchen.jsonschema.validator.JsonValidatorCache;
-import org.eel.kitchen.jsonschema.validator.SchemaNode;
+import org.eel.kitchen.jsonschema.validator.ValidationContext;
 
 /**
  * Validator for the {@code disallow} keyword
@@ -64,19 +61,13 @@ public final class DisallowKeywordValidator
         if (schemas.isEmpty())
             return;
 
-        final SchemaContainer orig = context.getContainer();
-        final JsonValidatorCache cache = context.getValidatorCache();
-
         ValidationReport schemaReport;
         JsonValidator validator;
-        SchemaNode subNode;
 
         for (final JsonNode schema: schemas) {
-            subNode = new SchemaNode(orig, schema);
-            validator = cache.getValidator(subNode);
+            validator = context.newValidator(schema);
             schemaReport = report.copy();
             validator.validate(context, schemaReport, instance);
-            context.setContainer(orig);
             if (schemaReport.isSuccess()) {
                 // FIXME: the day we have schema locators, add it here
                 msg = newMsg().setMessage("instance is valid against a " +
